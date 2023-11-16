@@ -2,36 +2,34 @@
 
 class UsersController {
     
-    public function getAllUsers() {
-        // Fetch all users 
-        // (dummy data for demonstration)
-        $users = [
-            ['id' => 1, 'name' => 'John Doe'],
-            ['id' => 2, 'name' => 'Alice Smith'],
-            // ... more user data
-        ];
+    private $userModel;
 
-        // Return a JSON response with all users
-        return $this->jsonResponse($users);
+    public function __construct(UserModel $userModel) {
+        $this->userModel = $userModel;
+    }
+
+    public function getAllUsers() {
+        try {
+            $users = $this->userModel->getAllUsers();
+            return $this->jsonResponse($users);
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function createUser() {
         $request = \GuzzleHttp\Psr7\ServerRequest::fromGlobals();
         $requestData = $request->getParsedBody();
 
-        // Perform input validation (simplified for demonstration)
         if (isset($requestData['name']) && isset($requestData['email'])) {
-            // Validating and creating a new user (dummy response for demonstration)
-            $newUser = [
-                'id' => 3, // Simulating a new user ID
-                'name' => $requestData['name'],
-                'email' => $requestData['email']
-            ];
-
-            // Return a JSON response with the newly created user
-            return $this->jsonResponse($newUser, 201); // 201: Created
+            try {
+                $newUser = $this->userModel->createUser($requestData['name'], $requestData['email']);
+                return $this->jsonResponse($newUser, 201);
+            } catch (Exception $e) {
+                return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            }
         } else {
-            return $this->jsonResponse(['error' => 'Invalid input data'], 400); // 400: Bad Request
+            return $this->jsonResponse(['error' => 'Invalid input data'], 400);
         }
     }
 
