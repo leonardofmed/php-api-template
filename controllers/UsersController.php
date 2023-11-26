@@ -1,6 +1,7 @@
 <?php
 
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class UsersController {
     
@@ -9,6 +10,29 @@ class UsersController {
 
     public function __construct() {
         $this->userModel = new UserModel();
+    }
+
+    private function getTokenFromHeaders() {
+        $authorizationHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        return str_replace('Bearer ', '', $authorizationHeader);
+    }
+
+    private function verifyToken($token) {
+        try {
+            // Verify the token using the JWT library and the secret key
+            JWT::decode($token, new Key($this->jwtSecret, 'HS256'));
+            return true; // Token is valid
+        } catch (Exception $e) {
+            return false; // Token verification failed
+        }
+    }
+
+    private function authenticate() {
+        $token = $this->getTokenFromHeaders();
+        if (!$token) {
+            return false; // No token provided
+        }
+        return $this->verifyToken($token);
     }
 
     public function login() {
@@ -47,6 +71,11 @@ class UsersController {
     }
 
     public function getUserByEmail($email) {
+        $decodedToken = $this->authenticate();
+        if (!$decodedToken) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+
         try {
             $user = $this->userModel->getUserByEmail($email);
             if ($user) {
