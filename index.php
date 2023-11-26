@@ -14,6 +14,8 @@ use GuzzleHttp\Psr7\ServerRequest;
 $dispatcher = FastRoute\simpleDispatcher(function(RouteCollector $r) {
     $r->addRoute('GET', '/api/users', ['UsersController', 'getAllUsers']);
     $r->addRoute('POST', '/api/users', ['UsersController', 'createUser']);
+    $r->addRoute('GET', '/api/users/{email}', ['UsersController', 'getUserByEmail']);
+    $r->addRoute('POST', '/api/login', ['UsersController', 'login']);
 });
 
 // Fetch method and URI from the server and match to a route

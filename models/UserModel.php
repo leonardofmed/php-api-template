@@ -31,10 +31,13 @@ class UserModel {
         }
     }
 
-    public function createUser($name, $email) {
+    public function createUser($name, $email, $pwd) {
         try {
-            $stmt = $this->db->prepare("INSERT INTO users (name, email) VALUES (?, ?)");
-            $stmt->execute([$name, $email]);
+            // Hash the password
+            $hashedPassword = password_hash($pwd, PASSWORD_DEFAULT);
+
+            $stmt = $this->db->prepare("INSERT INTO users (name, email, pwd) VALUES (?, ?, ?)");
+            $stmt->execute([$name, $email, $hashedPassword]);
 
             $newUserId = $this->db->lastInsertId();
 
@@ -42,6 +45,16 @@ class UserModel {
             $query->execute([$newUserId]);
             return $query->fetch(PDO::FETCH_ASSOC);
 
+        } catch (PDOException $e) {
+            throw new Exception('Database error: ' . $e->getMessage());
+        }
+    }
+    
+    public function getUserByEmail($email) {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             throw new Exception('Database error: ' . $e->getMessage());
         }
