@@ -2,6 +2,7 @@
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+require_once __DIR__ . '/../models/UserModel.php';
 
 class UsersController {
     
@@ -90,7 +91,20 @@ class UsersController {
 
     public function createUser() {
         $request = \GuzzleHttp\Psr7\ServerRequest::fromGlobals();
-        $requestData = $request->getParsedBody();
+        $contentType = $request->getHeaderLine('Content-Type');
+        $requestData = [];
+
+        if ($contentType === 'application/json') {
+            $body = $request->getBody()->getContents();
+            $requestData = json_decode($body, true);
+        } else {
+            $requestData = $request->getParsedBody();
+        }
+
+        // Check if request body exists and is not empty
+        if (!$requestData || empty($requestData)) {
+            return $this->jsonResponse(['error' => 'No data provided in the request body', 'request' => $requestData], 400);
+        }
 
         if (isset($requestData['name']) && isset($requestData['email']) && isset($requestData['password'])) {
             try {
@@ -100,7 +114,7 @@ class UsersController {
                 return $this->jsonResponse(['error' => $e->getMessage()], 500);
             }
         } else {
-            return $this->jsonResponse(['error' => 'Invalid input data'], 400);
+            return $this->jsonResponse(['error' => 'Incomplete data in the request body'], 400);
         }
     }
 
