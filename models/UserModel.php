@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../config/DatabaseConnection.php';
 
 class UserModel {
 
@@ -6,7 +7,7 @@ class UserModel {
 
     public function __construct() {
         // Load database configuration
-        require_once __DIR__ . '/../config/db.php';
+        $this->db = DatabaseConnection::getConnection();
     }
 
     public function getAllUsers() {

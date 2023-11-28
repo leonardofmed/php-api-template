@@ -4,13 +4,11 @@ require_once __DIR__ . '/../vendor/autoload.php'; // Load dotenv package
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..'); // Path to the directory where .env is located
 $dotenv->load();
 
-// Database configuration constants
 $dbHost = $_ENV['DB_HOST'];
 $dbName = $_ENV['DB_NAME'];
 $dbUser = $_ENV['DB_USER'];
 $dbPass = $_ENV['DB_PASS'];
 
-// Create a PDO connection
 $dsn = "mysql:host={$dbHost};dbname={$dbName}";
 // ATTR_ERRMODE defines how PDO will report errors
 // ATTR_DEFAULT_FETCH_MODE sets the default fetch mode for the PDO instance
@@ -24,5 +22,3 @@ try {
 } catch (PDOException $e) {
     die('Database connection failed: ' . $e->getMessage());
 }
-
-return $db;
