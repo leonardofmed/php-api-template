@@ -7,18 +7,6 @@ class UserModel {
     public function __construct() {
         // Load database configuration
         require_once __DIR__ . '/../config/db.php';
-
-        $dsn = "mysql:host={$dbHost};dbname={$dbName}";
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ];
-
-        try {
-            $this->db = new PDO($dsn, $dbUser, $dbPass, $options);
-        } catch (PDOException $e) {
-            throw new Exception('Database connection error: ' . $e->getMessage());
-        }
     }
 
     public function getAllUsers() {
