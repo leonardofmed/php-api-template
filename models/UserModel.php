@@ -20,19 +20,20 @@ class UserModel {
         }
     }
 
-    public function createUser($name, $email, $pwd) {
+    public function createUser($uid, $email, $pwd, $role) {
         try {
             // Hash the password
             $hashedPassword = password_hash($pwd, PASSWORD_DEFAULT);
 
-            $stmt = $this->db->prepare("INSERT INTO users (name, email, pwd) VALUES (?, ?, ?)");
-            $stmt->execute([$name, $email, $hashedPassword]);
+            $stmt = $this->db->prepare("INSERT INTO users (uid, email, pwd, role, last_modified) VALUES (?, ?, ?, ?, NOW())");
+            $stmt->execute([$uid, $email, $hashedPassword, $role]);
 
-            $newUserId = $this->db->lastInsertId();
+            return 'User created successfully';
 
-            $query = $this->db->prepare("SELECT * FROM users WHERE id = ?");
-            $query->execute([$newUserId]);
-            return $query->fetch(PDO::FETCH_ASSOC);
+            // $newUserId = $this->db->lastInsertId();
+            // $query = $this->db->prepare("SELECT * FROM users WHERE uid = ?");
+            // $query->execute([$newUserId]);
+            // return $query->fetch(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
             throw new Exception('Database error: ' . $e->getMessage());

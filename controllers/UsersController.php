@@ -106,9 +106,9 @@ class UsersController {
             return $this->jsonResponse(['error' => 'No data provided in the request body', 'request' => $requestData], 400);
         }
 
-        if (isset($requestData['name']) && isset($requestData['email']) && isset($requestData['password'])) {
+        if (isset($requestData['uid']) && isset($requestData['email']) && isset($requestData['password']) && isset($requestData['role'])) {
             try {
-                $newUser = $this->userModel->createUser($requestData['name'], $requestData['email'], $requestData['password']);
+                $newUser = $this->userModel->createUser($requestData['uid'], $requestData['email'], $requestData['password'], $requestData['role']);
                 return $this->jsonResponse($newUser, 201);
             } catch (Exception $e) {
                 return $this->jsonResponse(['error' => $e->getMessage()], 500);
