@@ -1,39 +1,22 @@
 <?php
 
 use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 require_once __DIR__ . '/../models/UserModel.php';
+require_once __DIR__ . '/../helpers/AuthHelper.php';
 
 class UsersController {
     
     private $userModel;
-    private $jwtSecret = 'your_secret_key';
+    private $jwtSecret;
+    private $authHelper;
 
     public function __construct() {
         $this->userModel = new UserModel();
-    }
 
-    private function getTokenFromHeaders() {
-        $authorizationHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        return str_replace('Bearer ', '', $authorizationHeader);
-    }
+        $jwtConfig = require_once __DIR__ . '/../config/jwt.php';
+        $this->jwtSecret = $jwtConfig['jwtSecret'] ?? null;
 
-    private function verifyToken($token) {
-        try {
-            // Verify the token using the JWT library and the secret key
-            JWT::decode($token, new Key($this->jwtSecret, 'HS256'));
-            return true; // Token is valid
-        } catch (Exception $e) {
-            return false; // Token verification failed
-        }
-    }
-
-    private function authenticate() {
-        $token = $this->getTokenFromHeaders();
-        if (!$token) {
-            return false; // No token provided
-        }
-        return $this->verifyToken($token);
+        $this->authHelper = new AuthHelper($this->jwtSecret);
     }
 
     public function login() {
@@ -71,7 +54,7 @@ class UsersController {
     }
 
     public function getAllUsers() {
-        $decodedToken = $this->authenticate();
+        $decodedToken = $this->authHelper->authenticate();
         if (!$decodedToken) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
@@ -85,7 +68,7 @@ class UsersController {
     }
 
     public function getUserByEmail() {
-        $decodedToken = $this->authenticate();
+        $decodedToken = $this->authHelper->authenticate();
         if (!$decodedToken) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
@@ -136,6 +119,28 @@ class UsersController {
             }
         } else {
             return $this->jsonResponse(['error' => 'Incomplete data in the request body'], 400);
+        }
+    }
+
+    public function deleteUser($uid) {
+        if (!$uid) {
+            return $this->jsonResponse(['error' => 'User ID not provided'], 400);
+        }
+        
+        $decodedToken = $this->authHelper->authenticate();
+        if (!$decodedToken) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $rowsAffected = $this->userModel->deleteUser($uid);
+            if ($rowsAffected > 0) {
+                return $this->jsonResponse(['success' => 'User deleted successfully']);
+            } else {
+                return $this->jsonResponse(['error' => 'User not found'], 404);
+            }
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 

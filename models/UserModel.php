@@ -49,4 +49,16 @@ class UserModel {
             throw new Exception('Database error: ' . $e->getMessage());
         }
     }
+
+    public function deleteUser($uid) {
+        try {
+            $query = "DELETE FROM users WHERE uid = ?";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute([$uid]);
+
+            return $stmt->rowCount(); // Returns the number of affected rows
+        } catch (PDOException $e) {
+            throw new Exception('Error deleting user: ' . $e->getMessage());
+        }
+    }
 }
