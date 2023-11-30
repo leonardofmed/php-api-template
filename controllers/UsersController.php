@@ -37,16 +37,24 @@ class UsersController {
     }
 
     public function login() {
-        $request = \GuzzleHttp\Psr7\ServerRequest::fromGlobals();
-        $requestData = $request->getParsedBody();
+        $request = \GuzzleHttp\Psr7\ServerRequest::fromGlobals();  
+        $contentType = $request->getHeaderLine('Content-Type');    
+        $requestData = [];
 
-        if (isset($requestData['email']) && isset($requestData['password'])) {
+        if ($contentType === 'application/json') {
+            $body = $request->getBody()->getContents();
+            $requestData = json_decode($body, true);
+        } else {
+            $requestData = $request->getParsedBody();
+        }
+
+        if (isset($requestData['email']) && isset($requestData['pwd'])) {
             try {
                 $user = $this->userModel->getUserByEmail($requestData['email']);
                 
-                if ($user && password_verify($requestData['password'], $user['password'])) {
+                if ($user && password_verify($requestData['pwd'], $user['pwd'])) {
                     // Generate JWT token
-                    $tokenPayload = ['user_id' => $user['id'], 'email' => $user['email']];
+                    $tokenPayload = ['uid' => $user['uid'], 'email' => $user['email']];
                     $jwtToken = JWT::encode($tokenPayload, $this->jwtSecret, 'HS256');
 
                     // Return token as JSON response
@@ -63,6 +71,11 @@ class UsersController {
     }
 
     public function getAllUsers() {
+        $decodedToken = $this->authenticate();
+        if (!$decodedToken) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
         try {
             $users = $this->userModel->getAllUsers();
             return $this->jsonResponse($users);
@@ -71,15 +84,23 @@ class UsersController {
         }
     }
 
-    public function getUserByEmail($email) {
+    public function getUserByEmail() {
         $decodedToken = $this->authenticate();
         if (!$decodedToken) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
 
+        $queryParams = $_GET;
+        $email = $queryParams['user'] ?? null; // 'user' is the key for the email parameter
+
+        if ($email === null) {
+            return $this->jsonResponse(['error' => 'Email parameter is missing'], 400);
+        }
+
         try {
             $user = $this->userModel->getUserByEmail($email);
             if ($user) {
+                unset($user['pwd']); // Remove pwd from response
                 return $this->jsonResponse($user);
             } else {
                 return $this->jsonResponse(['error' => 'User not found'], 404);
@@ -106,9 +127,9 @@ class UsersController {
             return $this->jsonResponse(['error' => 'No data provided in the request body', 'request' => $requestData], 400);
         }
 
-        if (isset($requestData['uid']) && isset($requestData['email']) && isset($requestData['password']) && isset($requestData['role'])) {
+        if (isset($requestData['uid']) && isset($requestData['email']) && isset($requestData['pwd']) && isset($requestData['role'])) {
             try {
-                $newUser = $this->userModel->createUser($requestData['uid'], $requestData['email'], $requestData['password'], $requestData['role']);
+                $newUser = $this->userModel->createUser($requestData['uid'], $requestData['email'], $requestData['pwd'], $requestData['role']);
                 return $this->jsonResponse($newUser, 201);
             } catch (Exception $e) {
                 return $this->jsonResponse(['error' => $e->getMessage()], 500);

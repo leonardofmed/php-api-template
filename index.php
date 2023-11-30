@@ -14,14 +14,18 @@ use GuzzleHttp\Psr7\ServerRequest;
 $dispatcher = FastRoute\simpleDispatcher(function(RouteCollector $r) {
     $r->addRoute('GET', '/api/users', ['UsersController', 'getAllUsers']);
     $r->addRoute('POST', '/api/users', ['UsersController', 'createUser']);
-    $r->addRoute('GET', '/api/users/{email}', ['UsersController', 'getUserByEmail']);
+    $r->addRoute('GET', '/api/user', ['UsersController', 'getUserByEmail']);
     $r->addRoute('POST', '/api/login', ['UsersController', 'login']);
 });
 
 // Fetch method and URI from the server and match to a route
 $httpMethod = $_SERVER['REQUEST_METHOD'];
 $uri = $_SERVER['REQUEST_URI'];
-
+// Strip query string (?foo=bar) and decode URI
+if (false !== $pos = strpos($uri, '?')) {
+    $uri = substr($uri, 0, $pos);
+}
+$uri = rawurldecode($uri);
 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
 
 switch ($routeInfo[0]) {
